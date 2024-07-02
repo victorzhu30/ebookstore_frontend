@@ -1,0 +1,153 @@
+handlePreview 处理图片文件的预览
+传入的file参数应该是一个包含文件信息的对象，该对象通常来自于用户在前端选择文件的过程。
+例如，当用户在一个<input type="file">表单中选取文件，或者使用了一些文件上传库（例如ant.design的Upload组件）选择文件时，会得到一个file对象。
+
+在上传过程中处理的文件对象一般包括以下的一些属性：
+uid: 每个文件的唯一标识。
+name: 文件的名称。
+status: 文件上传的状态。它可以是 "uploading"（上传中）、"done"（上传完成）、"error"（上传失败）或 "removed"（已移除）之一。
+url: 文件的URL，通常这个URL是文件上传成功后，服务器返回的表示这个文件资源位置的URL。
+preview: 这个属性是一个预览的URL，可以用这个URL在前端生成一份文件的预览。
+originFileObj: 这是文件的来源对象，通常会包含原始的文件信息。这个对象通常在使用浏览器提供的文件API（如FileReader）进行处理时使用。
+在你的函数中，file.url和file.preview都是用来显示文件预览的。如果从服务器得到了file.url就用这个URL作为预览图片的链接，否则就读取本地的文件对象file.originFileObj，转化为Base64字符串用于预览。
+
+file.url: 当你的图片成功上传到服务器后，服务器通常会存储这个图片并且返回一个指向这个图片的URL。这个URL就保存在file.url中。
+随后，你可以用这个URL在网站上的任何地方显示这个图片。例如，如果你上传一个头像，那么file.url可能会被设置为这个头像的链接，例如："https://yourwebsite.com/images/your-avatar.jpg"。
+file.preview: 这个属性是用来在前端显示文件预览。在头像上传的场景中，当用户选中一张图片，还没有点击上传，前端会生成这张图片的预览，这就是file.preview的作用。
+这个预览URL通常是一个代表本地文件的数据URL，由浏览器生成，并且可以直接被<img>标签使用以显示图片。数据URL通常是这样的格式："data:image/png;base64,iVBORw0KGg..."。
+
+也就是说，这两者的主要差别在于，file.url属于服务器生成的，指向已经上传图片的链路，可以在任何其它地方使用它来引用已上传的图片。
+而file.preview是在本地生成，用于在前端立即显示一个文件或图片的预览，便于用户在上传前看到他们即将上传的文件是什么样子。
+当图片上传成功后，我们一般使用file.url来显示这个图片，因为它指向的是在服务器上的资源位置，更加稳定和可靠。
+
+在有了预览图后，调用setPreviewImage函数将图片设置为预览图片。这个函数可以处理两种情况：如果文件上传到服务器了，那么就显示服务器上的图片（file.url）；如果服务器上还没有这个文件，那么显示刚刚生成的预览图（file.preview）。
+
+在正常情况下，预览图preview在选择文件后就会被前端生成，这样用户可以在上传文件之前即刻看到文件内容。对于图片，它会是一个可以直接在浏览器中显示的数据URL。
+但在某些情况下，preview可能出现为空的情况：
+
+图片文件过大时，浏览器生成预览图时可能会超出内存限制，导致预览图生成失败。
+在特殊的浏览器或环境中，文件API可能受限，无法获取到文件内容，从而无法生成预览。
+如果选取的文件是图片文件，但文件本身被损坏或者格式不支持，那么生成预览图可能也会失败。
+代码错误或异常，如前端代码在生成预览图时出现了错误，或者预览图在后续的处理中被错误地修改或移除。
+由于这些可能的因素，我们不能百分之百保证每张图片都能成功生成预览，这也就是代码中为什么要检查!file.preview的原因。
+
+上传文件主要取决于你的应用如何设计。
+当用户选择文件后，一般有两种做法：
+1. 直接上传：在这种情况下，用户在选择完文件后，前端会立即把文件发送到服务器。在文件上传的同时，前端也可以生成一个预览图显示给用户。这种方式的优点是用户在提交表单后无须等待文件上传，因为文件已经提前上传好了。
+2. 等待用户确认后再上传：在这种情况下，用户在选择文件后，前端会先生成预览图，然后等待用户进行下一步操作（可能是填写其他的表单项，或者是直接点击一个“上传”按钮）。只有在用户确认后，前端才把文件发送到服务器。
+你在使用的网站上看到的行为，可能是第一种方式，即直接上传。在这种情况下，你看到的预览图可能实际上是从服务器返回的URL生成的，而不是在本地生成的。这两种方式各有优点，具体使用哪种方式，取决于具体的需求和设计考虑。
+
+你描述的情况实质上是操作系统级别的文件预览功能。
+在你打开文件选择对话框时，操作系统会生成文件的预览，这并不是网页代码控制的部分。
+这种在文件选择对话框中预览文件的功能在许多现代的操作系统中都是默认提供的，例如Windows和macOS。
+当你选择了某个文件并点击确定后，这个文件才会被网页代码处理。
+
+E.g.
+当你点击上传头像，选择了图片A和图片B后，前端一般会立即为这两张图片生成一个预览，此时的预览就保存在图片的file.preview中。这个预览一般是一个数据URL，即base64编码的图片数据，可以直接被浏览器显示。这个时候，file.url应该还是空的，因为图片还没有真正上传到服务器。
+当你从预览中选择了图片A作为头像，点击上传后，前端会将图片文件发送到服务器。服务器收到文件后，会存储这个文件，并返回一个可以访问这个文件的URL。此时，这个URL就被设置到了file.url中。现在图片A有了它自己的url属性。
+图片B如果没有进行上传操作，那么它的file.url属性还是空的，只有file.preview属性，这个属性包含了图片的预览。
+
+-------------------------------------------------------------------------------------------------------
+import React, { useState } from 'react';
+import { PlusOutlined } from '@ant-design/icons';
+import { Image, Upload } from 'antd';
+function getBase64 (file) {
+    return new Promise(function(resolve, reject) {
+        const reader = new FileReader();
+        // FileReader 是一个Web API接口，它提供了一种读取（异步）用户在客户端选中的文件的内容的方式。这是通过读取 File 或 Blob 对象来完成的，也就是说，你可以获得用户上传的文件内容。
+        reader.readAsDataURL(file);
+        // readAsDataURL 方法用于开始读取指定的 Blob 或 File 对象中的内容。当读取操作完成时，FileReader 的 result 属性会包含一个data: URL格式的字符串以表示所读取文件的内容。
+        // data: URL以base64编码，因此我们称之为 "Base64 字符串"。它可以用于在不进行服务器交互的情况下直接在网页上显示文件内容。这对于预览图片、视频或者音频文件非常有用。
+
+        // 文件读取是一个异步操作，这意味着 reader.readAsDataURL(file) 方法会立即返回，并且文件的读取会在后台继续进行。所以，reader.onload 和 reader.onerror 定义的是在文件读取完毕后会发生什么。
+        reader.onload = () => resolve(reader.result);
+        // 定义的是一个事件处理器，它会在文件读取成功后被调用。此时，reader.result 包含了读取文件的结果，该结果以 Base64 字符串的形式存在。
+        // 此行代码的作用是将 Promise 的状态更改为 "fulfilled"，并将读取的结果作为 Promise 的结果值。
+        reader.onerror = (error) => reject(error);
+        // 定义另一个事件处理器，在文件读取失败时会被调用。失败时，会调用 reject(error)，将 Promise 的状态更改为 "rejected"，并将失败的原因 error 作为 Promise 的原因。
+    });
+}
+
+export default function Uploadprofile () {
+    // 控制图片预览的开关
+    const [previewOpen, setPreviewOpen] = useState(false);
+    // 预览的图片的URL
+    const [previewImage, setPreviewImage] = useState('');
+    const [fileList, setFileList] = useState([
+        {
+            uid: '-1',
+            name: 'image.png',
+            status: 'done',
+            url: 'https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png',
+        },
+        {
+            uid: '-xxx',
+            percent: 50,
+            name: 'image.png',
+            status: 'uploading',
+            url: 'https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png',
+        },
+        {
+            uid: '-5',
+            name: 'image.png',
+            status: 'error',
+        },
+    ]);
+
+    async function handlePreview (file) {
+        if (!file.url && !file.preview) {
+            // 如果文件没有url属性（表示文件还没有上传到服务器），并且文件也没有preview属性（表示还没有生成预览图）
+            file.preview = await getBase64(file.originFileObj);
+            // 调用getBase64函数来为文件生成一个预览图。
+        }
+        setPreviewImage(file.url || file.preview);
+        setPreviewOpen(true);
+        // 将预览窗口的状态设置为开启
+    }
+
+    const handleChange = ({ fileList: newFileList }) => setFileList(newFileList);
+    const uploadButton = (
+        <button
+            style={{
+                border: 0,
+                background: 'none',
+            }}
+            type="button"
+        >
+            <PlusOutlined />
+            <div
+                style={{
+                    marginTop: 8,
+                }}
+            >
+                Upload
+            </div>
+        </button>
+    );
+    return (
+        <>
+            <Upload
+                action="https://run.mocky.io/v3/435e224c-44fb-4773-9faf-380c5e6a2188"
+                listType="picture-circle"
+                fileList={fileList}
+                onPreview={handlePreview}
+                onChange={handleChange}
+            >
+                {fileList.length >= 8 ? null : uploadButton}
+            </Upload>
+            {previewImage && (
+                <Image
+                    wrapperStyle={{
+                        display: 'none',
+                    }}
+                    preview={{
+                        visible: previewOpen,
+                        onVisibleChange: (visible) => setPreviewOpen(visible),
+                        afterOpenChange: (visible) => !visible && setPreviewImage(''),
+                    }}
+                    src={previewImage}
+                />
+            )}
+        </>
+    );
+};

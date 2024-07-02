@@ -1,0 +1,42 @@
+.header {
+    background-color: white !important;
+    padding: 0;
+}
+
+.navbar {
+    align-content: center;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 0 50px;
+}
+
+.footer {
+    text-align: center;
+    height: 10vh;
+}
+
+.layout {
+    min-height: 100vh !important;
+}
+
+.card-container {
+    margin: 20px;
+}
+
+
+.bookstoreMenu {
+    margin-left: 20px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+.profile-input {
+    width: 300px;
+    font-size: 20px
+}
+
+.profile-notes {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
